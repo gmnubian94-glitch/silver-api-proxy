@@ -4,11 +4,35 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   try {
-    const apiRes = await fetch("https://api.metals.live/v1/spot/gold");
-    const json = await apiRes.json();
+    const API_URL = "https://metals-api.com/api/latest?access_key=DEIN_KEY&base=EUR&symbols=XAU";
 
-    res.status(200).json(json[0]);
+    const apiResponse = await fetch(API_URL, { cache: "no-store" });
+
+    if (!apiResponse.ok) {
+      return res.status(500).json({
+        error: "Upstream API returned non-OK status",
+        status: apiResponse.status,
+      });
+    }
+
+    const data = await apiResponse.json();
+
+    if (!data || typeof data !== "object") {
+      return res.status(500).json({ error: "Invalid upstream API response" });
+    }
+
+    const pricePerGram = data.rates.XAU / 31.1034768;
+
+    return res.status(200).json({
+      price_gram_24k: pricePerGram,
+      raw: data,
+    });
+
   } catch (err) {
-    res.status(500).json({ error: "API error", details: String(err) });
+    return res.status(500).json({
+      error: "Proxy Error",
+      message: err.message,
+      stack: String(err),
+    });
   }
 }
