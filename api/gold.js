@@ -1,16 +1,14 @@
 export default async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
   try {
-    const response = await fetch("https://www.goldapi.io/api/XAU/EUR", {
-      headers: {
-        "x-access-token": process.env.GOLDAPI_KEY,
-        "Content-Type": "application/json",
-      },
-    });
+    const apiRes = await fetch("https://api.metals.live/v1/spot/gold");
+    const json = await apiRes.json();
 
-    const data = await response.json();
-    res.status(200).json(data);
-
-  } catch (error) {
-    res.status(500).json({ error: "API Fehler", details: error.toString() });
+    res.status(200).json(json[0]);
+  } catch (err) {
+    res.status(500).json({ error: "API error", details: String(err) });
   }
 }
